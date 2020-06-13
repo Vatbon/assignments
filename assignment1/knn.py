@@ -55,8 +55,9 @@ class KNN:
         for i_test in range(num_test):
             for i_train in range(num_train):
                 # TODO: Fill dists[i_test][i_train]
-                pass
+                dists[i_test][i_train] = np.sum(np.abs(X[i_test] - self.train_X[i_train]))
 
+        return dists
     def compute_distances_one_loop(self, X):
         '''
         Computes L1 distance from every sample of X to every training sample
@@ -75,7 +76,8 @@ class KNN:
         for i_test in range(num_test):
             # TODO: Fill the whole row of dists[i_test]
             # without additional loops or list comprehensions
-            pass
+            dists[i_test] = (np.abs(X[i_test] - self.train_X)).sum(axis=1)
+        return dists
 
     def compute_distances_no_loops(self, X):
         '''
@@ -93,8 +95,10 @@ class KNN:
         num_test = X.shape[0]
         # Using float32 to to save memory - the default is float64
         dists = np.zeros((num_test, num_train), np.float32)
+        dists = (np.abs(X[:, np.newaxis, :] -
+                        self.train_X[np.newaxis, :, :])).sum(axis=2)
         # TODO: Implement computing all distances with no loops!
-        pass
+        return dists
 
     def predict_labels_binary(self, dists):
         '''
@@ -113,7 +117,7 @@ class KNN:
         for i in range(num_test):
             # TODO: Implement choosing best class based on k
             # nearest training samples
-            pass
+            pred[i] = (self.train_y[np.argsort(dists[i])[:self.k]].mean() > 0.5)
         return pred
 
     def predict_labels_multiclass(self, dists):
@@ -131,8 +135,10 @@ class KNN:
         num_test = dists.shape[0]
         num_test = dists.shape[0]
         pred = np.zeros(num_test, np.int)
+        candidates = self.train_y[np.argsort(dists, axis=1)][:, :self.k]
         for i in range(num_test):
             # TODO: Implement choosing best class based on k
             # nearest training samples
-            pass
+            pred[i] = np.argmax(np.bincount(candidates[i, :]))
         return pred
+
