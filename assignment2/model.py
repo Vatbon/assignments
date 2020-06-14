@@ -1,6 +1,6 @@
 import numpy as np
 
-from layers import FullyConnectedLayer, ReLULayer, softmax_with_cross_entropy, l2_regularization
+from layers import FullyConnectedLayer, ReLULayer, softmax_with_cross_entropy, l2_regularization, softmax
 
 
 class TwoLayerNet:
@@ -18,7 +18,9 @@ class TwoLayerNet:
         """
         self.reg = reg
         # TODO Create necessary layers
-        raise Exception("Not implemented!")
+        self.layer1 = FullyConnectedLayer(n_input, hidden_layer_size)
+        self.relu = ReLULayer()
+        self.layer2 = FullyConnectedLayer(hidden_layer_size, n_output)
 
     def compute_loss_and_gradients(self, X, y):
         """
@@ -33,15 +35,28 @@ class TwoLayerNet:
         # clear parameter gradients aggregated from the previous pass
         # TODO Set parameter gradient to zeros
         # Hint: using self.params() might be useful!
-        raise Exception("Not implemented!")
+        for _, param in self.params().items():
+          param.grad = np.zeros_like(param.value)
         
         # TODO Compute loss and fill param gradients
         # by running forward and backward passes through the model
         
+        out1 = self.layer1.forward(X)
+        out_relu = self.relu.forward(out1)
+        out2 = self.layer2.forward(out_relu)
+        
+        loss, d_preds = softmax_with_cross_entropy(out2, y)
+
+        b_out2 = self.layer2.backward(d_preds)
+        b_out_relu = self.relu.backward(b_out2)
+        b_out1 = self.layer1.backward(b_out_relu)
+
         # After that, implement l2 regularization on all params
         # Hint: self.params() is useful again!
-        raise Exception("Not implemented!")
-
+        for _, param in self.params().items():
+          loss_l2, grad_l2 = l2_regularization(param.value, self.reg)
+          loss += loss_l2
+          param.grad += grad_l2
         return loss
 
     def predict(self, X):
@@ -59,14 +74,20 @@ class TwoLayerNet:
         # can be reused
         pred = np.zeros(X.shape[0], np.int)
 
-        raise Exception("Not implemented!")
+        out1 = self.layer1.forward(X)
+        relu_out = self.relu.forward(out1)
+        out2 = self.layer2.forward(relu_out)
+        pred = np.argmax(softmax(out2), axis = 1)
+
         return pred
 
     def params(self):
         result = {}
 
         # TODO Implement aggregating all of the params
-
-        raise Exception("Not implemented!")
-
+        result = {'W1': self.layer1.params()['W'],
+        'B1': self.layer1.params()['B'], 
+        'W2': self.layer2.params()['W'],
+        'B2': self.layer2.params()['B']}
         return result
+
